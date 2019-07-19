@@ -4,8 +4,8 @@ let
   nixpkgs = fetchNixpkgs {
     owner = "NixOS";
     repo = "nixpkgs";
-    rev = "9a8d764486a5fc800d9ef202543f7bb7bb5f8ae7";
-    sha256 = "0b5qp0kmqgwgjal5ykvazbq1fglpk9faj79igyjmldbqs3gq62w3";
+    rev = "69f2836c1bbfbd94322ec740ded789bc6ec3a440";
+    sha256 = "0r9iirlj1cylbngy0jlh6qnvxz8vzdxgbyw5ncjynbw0h4qqfzq8";
   };
 
 in
