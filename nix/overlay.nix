@@ -22,8 +22,12 @@ with rec {
   chessaiOverlaySrc = super.fetchFromGitHub {
     owner = "chessai";
     repo = "overlays";
-    rev = "90ce8b231d3c38d5d2bbb9bc8c7dae6f49c5b9c8";
-    sha256 = "1icxkz3db089c742l14nia386fmq5kw6sgr0fncwp3w5gakwhvjh";
+    rev = "2fa3709044842cd9aa171a31cf8edb6580265c7d";
+    sha256 = "0iqhyj24r3q5iz3v8w79a6lzsv4zjpcr61kpnd0wx68gfvnszjx6";
+  };
+
+  buildMainOverlay = import "${chessaiOverlaySrc}/buildMain.nix" {
+    inherit hlib profiling haddocks;
   };
 
   c2nOverlay = import "${chessaiOverlaySrc}/c2n.nix" {
@@ -36,19 +40,7 @@ with rec {
   };
 
   mainOverlay = hself: hsuper: {
-    pong = hsuper.c2n {
-      name = "pong";
-      path = ../.;
-      apply = [ hlib.dontCheck ]
-        ++ ( if profiling
-             then [ hlib.enableLibraryProfiling hlib.enableExecutableProfiling ]
-             else [ hlib.disableLibraryProfiling hlib.disableExecutableProfiling ]
-           )
-        ++ ( if haddocks
-             then [ hlib.doHaddock ]
-             else [ hlib.dontHaddock ]
-           );
-    };
+    pong = hsuper.buildMain "pong" ../.;
 
     country = hlib.doJailbreak hsuper.country;
 
@@ -60,7 +52,7 @@ with rec {
         rev = "cf00ccfa25ebf62ff309958bc27185e1d45cc10a";
         sha256 = "0wiy98a6gbj19gb4p6hgb562vzj0r7yrvcdfqwwjy437jw955wsz";
       };
-      apply = [ hlib.doJailbreak hlib.dontHaddock hlib.dontCheck hlib.dontBenchmark ];
+      apply = [ ];
     };
 
     chronos = hsuper.c2n {
@@ -104,6 +96,7 @@ with rec {
 
   overlay = composeOverlayList [
     c2nOverlay
+    buildMainOverlay
     primitiveOverlay
     networkingOverlay
     mainOverlay
