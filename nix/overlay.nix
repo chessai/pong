@@ -10,8 +10,8 @@ with rec {
   primitiveOverlaySrc = super.fetchFromGitHub {
     owner = "haskell-primitive";
     repo = "primitive-overlay";
-    rev = "ba5227e6c96230e5486370e76a15428e28499989";
-    sha256 = "02dvrx6qrj8i3x4cjmisxzghx56ln84ay0p5dp0wd86sdippwxas";
+    rev = "4531a1c4c75e85278dc9257dfd520d9a51ff3bde";
+    sha256 = "1aj4kf5ll2n5a898xsiwwk3y8fzlbn09708rh069cmjlc3l2srp1";
   };
 
   primitiveOverlay = import primitiveOverlaySrc {
