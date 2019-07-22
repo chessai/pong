@@ -29,13 +29,11 @@ library
     Pong
   build-depends:
     , base >= 4.12 && < 4.13
-    , contiguous >= 0.4 && < 0.5
     , ip >= 1.5 && < 1.6
     , optparse-applicative >= 0.15 && < 0.16
     , ping >= 0.1 && < 0.2
     , primitive >= 0.7 && < 0.8
     , primitive-containers >= 0.4 && < 0.5
-    , sockets >= 0.5 && < 0.6
     , text >= 1.2 && < 1.3
   hs-source-dirs:
     src
