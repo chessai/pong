@@ -1,2 +1,0 @@
-runhaskell Setup.hs configure
-ghcid -c "runhaskell Setup.hs repl library:pong"
