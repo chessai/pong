@@ -10,8 +10,8 @@ with rec {
   primitiveOverlaySrc = super.fetchFromGitHub {
     owner = "haskell-primitive";
     repo = "primitive-overlay";
-    rev = "a9d88e96b17d5cd7f49048dc678d98db05ad00d0";
-    sha256 = "1r5v7zlgldqj2kf6bnnykl5ml09mfzp03kp38xwv2jlzyvmcdagh";
+    rev = "ba5227e6c96230e5486370e76a15428e28499989";
+    sha256 = "02dvrx6qrj8i3x4cjmisxzghx56ln84ay0p5dp0wd86sdippwxas";
   };
 
   primitiveOverlay = import primitiveOverlaySrc {
@@ -22,8 +22,8 @@ with rec {
   chessaiOverlaySrc = super.fetchFromGitHub {
     owner = "chessai";
     repo = "overlays";
-    rev = "2fa3709044842cd9aa171a31cf8edb6580265c7d";
-    sha256 = "0iqhyj24r3q5iz3v8w79a6lzsv4zjpcr61kpnd0wx68gfvnszjx6";
+    rev = "0f30191925ac7387663ca593abaef698fa7427e8";
+    sha256 = "1ldibc8lz4wq4jgqrx8dlspdcbx0k9nb0s9a6ywnzljx4l520mlm";
   };
 
   buildMainOverlay = import "${chessaiOverlaySrc}/buildMain.nix" {
