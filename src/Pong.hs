@@ -90,7 +90,7 @@ blast address = replicateM_ 100 (forkIO (pingLoop address))
 
 pingLoop :: IPv4 -> IO ()
 pingLoop address = do
-  e <- Ping.host 1000000 address
+  e <- Ping.host 1 address
   either (const (pure ())) (const (pingLoop address)) e
 
 data Blast = Blast
