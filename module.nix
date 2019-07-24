@@ -3,7 +3,7 @@
 {
   config = {
     nixpkgs.overlays = [
-      (super: self: {
+      (self: super: {
         pong = self.callPackage ./default.nix {};
       })
     ];
