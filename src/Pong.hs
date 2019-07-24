@@ -8,6 +8,8 @@
 
 module Pong (main) where
 
+import Control.Concurrent (forkIO)
+import Control.Monad (replicateM_)
 import Data.Primitive (PrimArray)
 import Data.Word (Word64)
 import Net.Types (IPv4,IPv4Range)
@@ -57,6 +59,7 @@ run = \case
     Ping.multirange (timeout * 1000000) (delay * 1000000) requests cutoff range >>= \case
       Left err -> TIO.hPutStrLn stderr (T.pack (show err))
       Right m -> printMultihosts m
+  CommandBlast Blast{address} -> blast address
 
 printHosts :: MUU.Map IPv4 Word64 -> IO ()
 printHosts = MUU.traverseWithKey_
@@ -80,6 +83,19 @@ data Command
   | CommandRange Range
   | CommandMultihosts Multihosts
   | CommandMultirange Multirange
+  | CommandBlast Blast
+
+blast :: IPv4 -> IO ()
+blast address = replicateM_ 100 (forkIO (pingLoop address))
+
+pingLoop :: IPv4 -> IO ()
+pingLoop address = do
+  e <- Ping.host 1000000 address
+  either (const (pure ())) (const (pingLoop address)) e
+
+data Blast = Blast
+  { address :: !IPv4
+  }
 
 data Host = Host
   { timeout :: !Int -- seconds
@@ -129,7 +145,17 @@ commandParser = P.hsubparser $ mconcat
   , P.command "multirange" $ P.info
       (CommandMultirange <$> multirangeParser)
       (P.progDesc "Multiple ICMP echo requests to each host in range")
+  , P.command "blast" $ P.info
+      (CommandBlast <$> blastParser)
+      (P.progDesc "Stress-test a host. Do NOT use this maliciously. This is only meant to be used to stress-test devices.")
   ]
+
+blastParser :: P.Parser Blast
+blastParser = Blast
+  <$> P.argument ipReadM
+      ( P.metavar "HOST"
+      <> P.help "IPv4 address of destination"
+      )
 
 hostParser :: P.Parser Host
 hostParser = Host
