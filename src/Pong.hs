@@ -94,11 +94,17 @@ blast address = replicateM_ 100 (forkIO (pingLoop address))
 pingLoop :: IPv4 -> IO ()
 pingLoop address = do
   let go !(ix :: Int) = do
+        print ix
+        go (ix + 1)
+  go 0
+{-
+  = do
         e <- Ping.host 1 address
         print e
         print ix
         go (ix + 1)
   go 0
+-}
 
 blastRange :: IPv4Range -> IO ()
 blastRange rng = replicateM_ 100 $ forkIO $ do
