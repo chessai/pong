@@ -4,6 +4,7 @@
       , OverloadedStrings
       , LambdaCase
       , NamedFieldPuns
+      , ScopedTypeVariables
   #-}
 
 module Pong (main) where
@@ -89,21 +90,19 @@ data Command
 
 blast :: IPv4 -> IO ()
 blast address = replicateM_ 100 $ forkIO $ do
-  let go = do
-        e <- Ping.host 1 address
-        case e of
-          Left _ -> pure ()
-          Right _ -> go
-  go
+  let go !(ix :: Int) = do
+        _ <- Ping.host 1 address
+        print ix
+        go (ix + 1)
+  go 0
 
 blastRange :: IPv4Range -> IO ()
 blastRange rng = replicateM_ 100 $ forkIO $ do
-  let go = do
-        e <- Ping.range 1 rng
-        case e of
-          Left _ -> pure ()
-          Right _ -> go
-  go
+  let go !(ix :: Int) = do
+        _ <- Ping.range 1 rng
+        print ix
+        go (ix + 1)
+  go 0
 
 data Blast = Blast
   { address :: !IPv4
