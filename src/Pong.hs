@@ -37,28 +37,33 @@ main = do
     P.fullDesc
   run cmd
 
+printError :: Ping.IcmpException -> IO ()
+printError err
+  | err == Ping.IcmpExceptionSocket 13 = TIO.hPutStrLn stderr "Unable to create a raw socket."
+  | otherwise = TIO.hPutStrLn stderr (T.pack (show err))
+
 run :: Command -> IO ()
 run = \case
   CommandHost Host{address,timeout} -> Ping.host (timeout * 1000000) address >>= \case
-    Left err -> TIO.hPutStrLn stderr (T.pack (show err))
+    Left err -> printError err
     Right m -> case m of
       Nothing -> TIO.hPutStrLn stderr "Timed out"
       Just ns -> TLIO.putStrLn (TB.toLazyText (TBI.decimal ns))
   CommandHosts Hosts{address,timeout} ->
     Ping.hosts (timeout * 1000000) (SU.fromList address) >>= \case
-      Left err -> TIO.hPutStrLn stderr (T.pack (show err))
+      Left err -> printError err
       Right m -> printHosts m
   CommandRange Range{range,timeout} ->
     Ping.range (timeout * 1000000) range >>= \case
-      Left err -> TIO.hPutStrLn stderr (T.pack (show err))
+      Left err -> printError err
       Right m -> printHosts m
   CommandMultihosts Multihosts{address,timeout,requests,cutoff,delay} ->
     Ping.multihosts (timeout * 1000000) (delay * 1000000) requests cutoff (SU.fromList address) >>= \case
-      Left err -> TIO.hPutStrLn stderr (T.pack (show err))
+      Left err -> printError err
       Right m -> printMultihosts m
   CommandMultirange Multirange{range,timeout,requests,cutoff,delay} ->
     Ping.multirange (timeout * 1000000) (delay * 1000000) requests cutoff range >>= \case
-      Left err -> TIO.hPutStrLn stderr (T.pack (show err))
+      Left err -> printError err
       Right m -> printMultihosts m
   CommandBlast b -> do
     blast b
