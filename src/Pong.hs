@@ -97,6 +97,10 @@ data Blast = Blast
   { address :: !IPv4
   }
 
+data BlastRange = BlastRange
+  { range :: !IPv4Range
+  }
+
 data Host = Host
   { timeout :: !Int -- seconds
   , address :: !IPv4
