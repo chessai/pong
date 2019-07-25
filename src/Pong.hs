@@ -10,7 +10,7 @@
 module Pong (main) where
 
 import Control.Concurrent (forkIO)
-import Control.Monad (replicateM_, when)
+import Control.Monad (replicateM_)
 import Data.Primitive (PrimArray)
 import Data.Word (Word64)
 import Net.Types (IPv4,IPv4Range)
@@ -60,8 +60,16 @@ run = \case
     Ping.multirange (timeout * 1000000) (delay * 1000000) requests cutoff range >>= \case
       Left err -> TIO.hPutStrLn stderr (T.pack (show err))
       Right m -> printMultihosts m
-  CommandBlast Blast{address} -> blast address
-  CommandBlastRange BlastRange{range} -> blastRange range
+  CommandBlast Blast{address} -> do
+    blast address
+    putStrLn "Press enter to exit."
+    _ <- getLine
+    pure ()
+  CommandBlastRange BlastRange{range} -> do
+    blastRange range
+    putStrLn "Press enter to exit."
+    _ <- getLine
+    pure ()
 
 printHosts :: MUU.Map IPv4 Word64 -> IO ()
 printHosts = MUU.traverseWithKey_
@@ -89,30 +97,21 @@ data Command
   | CommandBlastRange BlastRange
 
 blast :: IPv4 -> IO ()
-blast address = replicateM_ 100 (forkIO (pingLoop address))
+blast address = replicateM_ 100 (forkIO (blastLoop address 0))
 
-pingLoop :: IPv4 -> IO ()
-pingLoop address = do
-  let go !(ix :: Int) = when (ix < 1000) $ do
-        print ix
-        go (ix + 1)
-  go 0
-{-
-  = do
-        e <- Ping.host 1 address
-        print e
-        print ix
-        go (ix + 1)
-  go 0
--}
+blastLoop :: IPv4 -> Int -> IO ()
+blastLoop address !ix = do
+  _ <- Ping.host 1 address
+  print ix
+  blastLoop address (ix + 1)
 
 blastRange :: IPv4Range -> IO ()
-blastRange rng = replicateM_ 100 $ forkIO $ do
-  let go !(ix :: Int) = do
-        _ <- Ping.range 1 rng
-        print ix
-        go (ix + 1)
-  go 0
+blastRange rng = replicateM_ 100 (forkIO (blastRangeLoop rng))
+
+blastRangeLoop :: IPv4Range -> IO ()
+blastRangeLoop rng = do
+  _ <- Ping.range 1 rng
+  blastRangeLoop rng
 
 data Blast = Blast
   { address :: !IPv4
