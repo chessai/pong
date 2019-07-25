@@ -75,6 +75,11 @@ run = \case
     putStrLn "Press enter to exit."
     _ <- getLine
     pure ()
+  CommandBlastRanges b -> do
+    blastRanges b
+    putStrLn "Press enter to exit."
+    _ <- getLine
+    pure ()
 
 printHosts :: MUU.Map IPv4 Word64 -> IO ()
 printHosts = MUU.traverseWithKey_
@@ -100,6 +105,7 @@ data Command
   | CommandMultirange Multirange
   | CommandBlast Blast
   | CommandBlastRange BlastRange
+  | CommandBlastRanges BlastRanges
 
 blast :: Blast -> IO ()
 blast Blast{address,threads} = replicateM_ threads $ forkIO $
@@ -111,6 +117,10 @@ blastRange BlastRange{range,threads} = replicateM_ threads $ forkIO $
   let go = do { _ <- Ping.range 1 range; go; }
   in go
 
+blastRanges :: BlastRanges -> IO ()
+blastRanges BlastRanges{ranges,threads} = mapM_ forkIO
+  (fmap (\rng -> blastRange (BlastRange rng threads)) ranges)
+
 data Blast = Blast
   { address :: !IPv4
   , threads :: !Int -- ^ how many threads to spin up
@@ -118,6 +128,11 @@ data Blast = Blast
 
 data BlastRange = BlastRange
   { range :: !IPv4Range
+  , threads :: !Int -- ^ how many threads to spin up
+  }
+
+data BlastRanges = BlastRanges
+  { ranges :: [IPv4Range]
   , threads :: !Int -- ^ how many threads to spin up
   }
 
@@ -175,6 +190,9 @@ commandParser = P.hsubparser $ mconcat
   , P.command "blast-range" $ P.info
       (CommandBlastRange <$> blastRangeParser)
       (P.progDesc "Stress-test a range of hosts")
+  , P.command "blast-ranges" $ P.info
+      (CommandBlastRanges <$> blastRangesParser)
+      (P.progDesc "Stress-test several ranges of hosts")
   ]
 
 blastParser :: P.Parser Blast
@@ -241,6 +259,23 @@ blastRangeParser = BlastRange
   <$> P.argument ipRangeReadM
       ( P.metavar "RANGE"
       <> P.help "Destination as IPv4 range in CIDR notation"
+      )
+  <*> P.option P.auto
+      ( P.long "threads"
+      <> P.short 't'
+      <> P.metavar "THREADS"
+      <> P.value 100
+      <> P.showDefault
+      <> P.help "Number of threads to spin up to blast."
+      )
+
+blastRangesParser :: P.Parser BlastRanges
+blastRangesParser = BlastRanges
+  <$> P.some
+      ( P.argument ipRangeReadM
+        ( P.metavar "RANGE"
+        <> P.help "Destination as IPv4 range in CIDR notation"
+        )
       )
   <*> P.option P.auto
       ( P.long "threads"
