@@ -60,13 +60,13 @@ run = \case
     Ping.multirange (timeout * 1000000) (delay * 1000000) requests cutoff range >>= \case
       Left err -> TIO.hPutStrLn stderr (T.pack (show err))
       Right m -> printMultihosts m
-  CommandBlast Blast{address} -> do
-    blast address
+  CommandBlast b -> do
+    blast b
     putStrLn "Press enter to exit."
     _ <- getLine
     pure ()
-  CommandBlastRange BlastRange{range} -> do
-    blastRange range
+  CommandBlastRange b -> do
+    blastRange b
     putStrLn "Press enter to exit."
     _ <- getLine
     pure ()
@@ -96,29 +96,24 @@ data Command
   | CommandBlast Blast
   | CommandBlastRange BlastRange
 
-blast :: IPv4 -> IO ()
-blast address = replicateM_ 100 (forkIO (blastLoop address 0))
+blast :: Blast -> IO ()
+blast Blast{address,threads} = replicateM_ threads $ forkIO $
+  let go = do { _ <- Ping.host 1 address; go; }
+  in go
 
-blastLoop :: IPv4 -> Int -> IO ()
-blastLoop address !ix = do
-  _ <- Ping.host 1 address
-  print ix
-  blastLoop address (ix + 1)
-
-blastRange :: IPv4Range -> IO ()
-blastRange rng = replicateM_ 100 (forkIO (blastRangeLoop rng))
-
-blastRangeLoop :: IPv4Range -> IO ()
-blastRangeLoop rng = do
-  _ <- Ping.range 1 rng
-  blastRangeLoop rng
+blastRange :: BlastRange -> IO ()
+blastRange BlastRange{range,threads} = replicateM_ threads $ forkIO $
+  let go = do { _ <- Ping.range 1 range; go; }
+  in go
 
 data Blast = Blast
   { address :: !IPv4
+  , threads :: !Int -- ^ how many threads to spin up
   }
 
 data BlastRange = BlastRange
   { range :: !IPv4Range
+  , threads :: !Int -- ^ how many threads to spin up
   }
 
 data Host = Host
@@ -183,6 +178,14 @@ blastParser = Blast
       ( P.metavar "HOST"
       <> P.help "IPv4 address of destination"
       )
+  <*> P.option P.auto
+      ( P.long "threads"
+      <> P.short 't'
+      <> P.metavar "THREADS"
+      <> P.value 100
+      <> P.showDefault
+      <> P.help "Number of threads to spin up to blast."
+      )
 
 hostParser :: P.Parser Host
 hostParser = Host
@@ -233,6 +236,14 @@ blastRangeParser = BlastRange
   <$> P.argument ipRangeReadM
       ( P.metavar "RANGE"
       <> P.help "Destination as IPv4 range in CIDR notation"
+      )
+  <*> P.option P.auto
+      ( P.long "threads"
+      <> P.short 't'
+      <> P.metavar "THREADS"
+      <> P.value 100
+      <> P.showDefault
+      <> P.help "Number of threads to spin up to blast."
       )
 
 multihostsParser :: P.Parser Multihosts
