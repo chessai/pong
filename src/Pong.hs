@@ -10,7 +10,7 @@
 module Pong (main) where
 
 import Control.Concurrent (forkIO)
-import Control.Monad (replicateM_)
+import Control.Monad (replicateM_, when)
 import Data.Primitive (PrimArray)
 import Data.Word (Word64)
 import Net.Types (IPv4,IPv4Range)
@@ -93,7 +93,7 @@ blast address = replicateM_ 100 (forkIO (pingLoop address))
 
 pingLoop :: IPv4 -> IO ()
 pingLoop address = do
-  let go !(ix :: Int) = do
+  let go !(ix :: Int) = when (ix < 1000) $ do
         print ix
         go (ix + 1)
   go 0
