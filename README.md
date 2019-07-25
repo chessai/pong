@@ -16,7 +16,9 @@ Available commands:
   range                    One ICMP echo request to each host in range
   multihosts               Multiple ICMP echo requests to each argument host
   multirange               Multiple ICMP echo requests to each host in range
-  blast                    Stress-test a host.
+  blast                    Stress-test a host
+  blast-range              Stress-test a range of hosts
+  blast-ranges             Stress-test several ranges of hosts
 ```
 
 ## Compiling
