@@ -60,6 +60,7 @@ run = \case
       Left err -> TIO.hPutStrLn stderr (T.pack (show err))
       Right m -> printMultihosts m
   CommandBlast Blast{address} -> blast address
+  CommandBlastRange BlastRange{range} -> blastRange range
 
 printHosts :: MUU.Map IPv4 Word64 -> IO ()
 printHosts = MUU.traverseWithKey_
@@ -84,14 +85,25 @@ data Command
   | CommandMultihosts Multihosts
   | CommandMultirange Multirange
   | CommandBlast Blast
+  | CommandBlastRange BlastRange
 
 blast :: IPv4 -> IO ()
-blast address = replicateM_ 100 (forkIO (pingLoop address))
+blast address = replicateM_ 100 $ forkIO $ do
+  let go = do
+        e <- Ping.host 1 address
+        case e of
+          Left _ -> pure ()
+          Right _ -> go
+  go
 
-pingLoop :: IPv4 -> IO ()
-pingLoop address = do
-  e <- Ping.host 1 address
-  either (const (pure ())) (const (pingLoop address)) e
+blastRange :: IPv4Range -> IO ()
+blastRange rng = replicateM_ 100 $ forkIO $ do
+  let go = do
+        e <- Ping.range 1 rng
+        case e of
+          Left _ -> pure ()
+          Right _ -> go
+  go
 
 data Blast = Blast
   { address :: !IPv4
@@ -151,7 +163,10 @@ commandParser = P.hsubparser $ mconcat
       (P.progDesc "Multiple ICMP echo requests to each host in range")
   , P.command "blast" $ P.info
       (CommandBlast <$> blastParser)
-      (P.progDesc "Stress-test a host. Do NOT use this maliciously. This is only meant to be used to stress-test devices.")
+      (P.progDesc "Stress-test a host")
+  , P.command "blast-range" $ P.info
+      (CommandBlastRange <$> blastRangeParser)
+      (P.progDesc "Stress-test a range of hosts")
   ]
 
 blastParser :: P.Parser Blast
@@ -203,6 +218,13 @@ rangeParser = Range
   <*> P.argument ipRangeReadM
       ( P.metavar "RANGE"
      <> P.help "Destinations as IPv4 range in CIDR notation"
+      )
+
+blastRangeParser :: P.Parser BlastRange
+blastRangeParser = BlastRange
+  <$> P.argument ipRangeReadM
+      ( P.metavar "RANGE"
+      <> P.help "Destination as IPv4 range in CIDR notation"
       )
 
 multihostsParser :: P.Parser Multihosts
